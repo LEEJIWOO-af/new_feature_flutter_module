@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'models/UserInfo.dart';
 
-const channelName = 'com.example.module-test/custom';
+// 채널명을 Android에서 지정한 것과 일치시켜야함
+const channelName = 'com.example.new_feature_android/custom1';
 const methodChannel = MethodChannel(channelName);
 
 void main() => runApp(const MyApp());
-
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -23,6 +24,7 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
 class Custom1 extends StatefulWidget {
   const Custom1({super.key, required this.title});
   final String title;
@@ -33,32 +35,78 @@ class Custom1 extends StatefulWidget {
 
 class _Custom1State extends State<Custom1> {
   int _counter = 0;
-  var _methodCallArguments = "null";
+  List<UserInfo> _userList = [];
+  UserInfo? _currentUser;
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    print("new_feature_flutter loaded");
-    // 화면이 생성되는 순간 메소드 채널에서 호출되는 메소드의 핸들러를 설정
-    methodChannel.setMethodCallHandler(methodHandler);
+    print("new flutter loaded");
+    _setupMethodChannel();
+    _loadUserData();
   }
 
-  Future<dynamic> methodHandler(MethodCall methodCall) async {
-    print('methodHandler: ${methodCall.method}');
-    if (methodCall.method == "getUserToken"){
-      // 메소드 채널에서 호출된 메소드가 "getUserToken"이라는 메소드인 경우
-      print('methodHandler: ${methodCall.arguments}');
+  void _setupMethodChannel() {
+    // Android에서 보내는 데이터를 받는 리스너
+    methodChannel.setMethodCallHandler((call) async {
+      switch (call.method) {
+        case 'receiveUserInfo':
+          _handleReceiveUserInfo(call.arguments);
+          break;
+        default:
+          print('Unknown method: ${call.method}');
+      }
+    });
+  }
+
+  void _handleReceiveUserInfo(dynamic arguments) {
+    if (arguments is List) {
       setState(() {
-        _methodCallArguments = methodCall.arguments;
-      }); // "getUserToken"이라는 메소드를 통해 들어온 인자를 private 변수에 저장
-      return "received flutter";
+        _userList = arguments
+            .map((userMap) => UserInfo.fromMap(Map<String, dynamic>.from(userMap)))
+            .toList();
+      });
+      print('Received ${_userList.length} users from Android');
     }
-  } // 메소드 채널로 전달된 인자를 private 변수로 저장합니다
+  }
+
+  // Android에 사용자 데이터 요청
+  Future<void> _loadUserData() async {
+    setState(() => _isLoading = true);
+
+    try {
+      // 전체 사용자 리스트 요청
+      final result = await methodChannel.invokeMethod('getUserInfo');
+      if (result is List) {
+        setState(() {
+          _userList = result
+              .map((userMap) => UserInfo.fromMap(Map<String, dynamic>.from(userMap)))
+              .toList();
+        });
+      }
+
+      // 현재 사용자 요청
+      final currentUserResult = await methodChannel.invokeMethod('getCurrentUser');
+      if (currentUserResult is Map) {
+        setState(() {
+          _currentUser = UserInfo.fromMap(Map<String, dynamic>.from(currentUserResult));
+        });
+      }
+
+      print('Loaded ${_userList.length} users');
+      print('Current user: ${_currentUser?.name}');
+
+    } catch (e) {
+      print('Error loading user data: $e');
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
 
   void _incrementCounter() {
     setState(() {
       _counter++;
-      print("_methodCallArguments: $_methodCallArguments");
     });
   }
 
@@ -75,31 +123,70 @@ class _Custom1State extends State<Custom1> {
         ),
         title: Text(widget.title),
       ),
-      body: Center(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             const Text(
               'Module Test1',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
+            const SizedBox(height: 16),
             Text(
-              '$_counter',
+              'Counter: $_counter',
+              style: const TextStyle(fontSize: 18),
             ),
-            Padding(
-              padding: const EdgeInsets.only(top: 20.0),
-              child: Column(
-                children: [
-                  const Text(
-                      "Method Call Arguments"
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
-                    child: Text(
-                      _methodCallArguments,
-                    ),
-                  ), // 메소드 채널로 받은 인자를 화면에 출력합니다
-                ],
+            const SizedBox(height: 32),
+
+            // 현재 사용자 정보 표시
+            if (_currentUser != null) ...[
+              const Text(
+                'Current User:',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
+              const SizedBox(height: 8),
+              Card(
+                child: ListTile(
+                  leading: _currentUser!.profilePictureUrl != null
+                      ? CircleAvatar(
+                    backgroundImage: NetworkImage(_currentUser!.profilePictureUrl!),
+                  )
+                      : const CircleAvatar(child: Icon(Icons.person)),
+                  title: Text(_currentUser!.name),
+                  subtitle: Text(_currentUser!.email),
+                ),
+              ),
+              const SizedBox(height: 32),
+            ],
+
+            // 전체 사용자 리스트 표시
+            const Text(
+              'All Users:',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _userList.length,
+              itemBuilder: (context, index) {
+                final user = _userList[index];
+                return Card(
+                  child: ListTile(
+                    leading: user.profilePictureUrl != null
+                        ? CircleAvatar(
+                      backgroundImage: NetworkImage(user.profilePictureUrl!),
+                    )
+                        : const CircleAvatar(child: Icon(Icons.person)),
+                    title: Text(user.name),
+                    subtitle: Text(user.email),
+                    trailing: Text('ID: ${user.id}'),
+                  ),
+                );
+              },
             ),
           ],
         ),
