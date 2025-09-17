@@ -11,7 +11,7 @@ class UserInfo {
     this.profilePictureUrl,
   });
 
-  // Android에서 보낸 Map 데이터를 UserInfo로 변환
+
   factory UserInfo.fromMap(Map<String, dynamic> map) {
     return UserInfo(
       id: map['id'] ?? '',
@@ -21,7 +21,6 @@ class UserInfo {
     );
   }
 
-  // UserInfo를 Map으로 변환 (필요시 사용)
   Map<String, dynamic> toMap() {
     return {
       'id': id,

@@ -100,7 +100,6 @@ class _ImplicitAnimationScreenState extends State<ImplicitAnimationScreen> {
         ),
       ),
 
-      // 플로팅 액션 버튼도 애니메이션
       floatingActionButton: AnimatedContainer(
         duration: Duration(milliseconds: 300),
         child: FloatingActionButton(

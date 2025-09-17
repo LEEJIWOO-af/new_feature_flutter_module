@@ -31,7 +31,7 @@ class HeroAnimationScreen extends StatelessWidget {
                 );
               },
               child: Hero(
-                tag: 'profile-image', // 고유한 태그로 연결
+                tag: 'profile-image',
                 child: Container(
                   width: 80,
                   height: 80,
@@ -59,7 +59,6 @@ class HeroAnimationScreen extends StatelessWidget {
               style: TextStyle(color: Colors.grey[600]),
             ),
 
-            // 🚀 추가된 Implicit Animation으로 이동하는 버튼
             SizedBox(height: 40),
             Divider(),
             SizedBox(height: 20),
@@ -103,7 +102,7 @@ class HeroDetailScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Hero(
-              tag: 'profile-image', // 같은 태그로 연결
+              tag: 'profile-image',
               child: Container(
                 width: 250,
                 height: 250,

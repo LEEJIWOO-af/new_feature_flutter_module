@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:new_feature_flutter_module/presentation/hero_screen.dart';
+import 'package:new_feature_flutter_module/presentation/weather_screen.dart';
 
-import 'models/UserInfo.dart';
+import 'models/userInfo.dart';
 
-// 채널명을 Android에서 지정한 것과 일치시켜야함
+// Androidと同じMethodChannel名を使用
 const channelName = 'com.example.new_feature_android/custom1';
 const methodChannel = MethodChannel(channelName);
 
-void main() => runApp(const MyApp());
+void main() => runApp(const ProviderScope(child: MyApp()));
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -44,42 +46,15 @@ class _Custom1State extends State<Custom1> {
   void initState() {
     super.initState();
     print("new flutter loaded");
-    _setupMethodChannel();
     _loadUserData();
   }
 
-  void _setupMethodChannel() {
-    // Android에서 보내는 데이터를 받는 리스너
-    methodChannel.setMethodCallHandler((call) async {
-      switch (call.method) {
-        case 'receiveUserInfo':
-          _handleReceiveUserInfo(call.arguments);
-          break;
-        default:
-          print('Unknown method: ${call.method}');
-      }
-    });
-  }
-
-  void _handleReceiveUserInfo(dynamic arguments) {
-    if (arguments is List) {
-      setState(() {
-        _userList = arguments
-            .map(
-              (userMap) => UserInfo.fromMap(Map<String, dynamic>.from(userMap)),
-            )
-            .toList();
-      });
-      print('Received ${_userList.length} users from Android');
-    }
-  }
-
-  // Android에 사용자 데이터 요청
+  // Request User data to Android
   Future<void> _loadUserData() async {
     setState(() => _isLoading = true);
 
     try {
-      // 전체 사용자 리스트 요청
+      // getUserInfo メソット呼び出し
       final result = await methodChannel.invokeMethod('getUserInfo');
       if (result is List) {
         setState(() {
@@ -92,7 +67,6 @@ class _Custom1State extends State<Custom1> {
         });
       }
 
-      // 현재 사용자 요청
       final currentUserResult = await methodChannel.invokeMethod(
         'getCurrentUser',
       );
@@ -150,7 +124,6 @@ class _Custom1State extends State<Custom1> {
                   ),
                   const SizedBox(height: 32),
 
-                  // 현재 사용자 정보 표시
                   if (_currentUser != null) ...[
                     const Text(
                       'Current User:',
@@ -176,7 +149,6 @@ class _Custom1State extends State<Custom1> {
                     const SizedBox(height: 32),
                   ],
 
-                  // 전체 사용자 리스트 표시
                   const Text(
                     'All Users:',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
@@ -205,18 +177,8 @@ class _Custom1State extends State<Custom1> {
                     },
                   ),
 
-                  // 애니메이션 데모 버튼
                   const SizedBox(height: 40),
                   const Divider(),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'Flutter Animation Demo',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.indigo,
-                    ),
-                  ),
                   const SizedBox(height: 16),
                   SizedBox(
                     width: double.infinity,
@@ -247,7 +209,37 @@ class _Custom1State extends State<Custom1> {
                       ),
                     ),
                   ),
-                  SizedBox(height: 40,)
+                  const SizedBox(height: 40,),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => WeatherScreen(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(
+                        Icons.flight_takeoff,
+                        color: Colors.white,
+                      ),
+                      label: const Text(
+                        'Async Weather Demo',
+                        style: TextStyle(fontSize: 16, color: Colors.white),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.indigo,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 5,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 80),
                 ],
               ),
             ),
