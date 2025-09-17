@@ -28,12 +28,12 @@ class WeatherRepository {
       if (response.statusCode == 200) {
         return Weather.fromJson(response.data);
       } else {
-        throw Exception('날씨 데이터를 가져올 수 없습니다');
+        throw Exception('weather error');
       }
     } on DioException catch (e) {
-      throw Exception('네트워크 오류: ${e.message}');
+      throw Exception('network error: ${e.message}');
     } catch (e) {
-      throw Exception('알 수 없는 오류: $e');
+      throw Exception('error: $e');
     }
   }
 
@@ -50,12 +50,12 @@ class WeatherRepository {
       if (response.statusCode == 200) {
         return Weather.fromJson(response.data);
       } else {
-        throw Exception('날씨 데이터를 가져올 수 없습니다');
+        throw Exception('Weather error');
       }
     } on DioException catch (e) {
-      throw Exception('네트워크 오류: ${e.message}');
+      throw Exception('Network error: ${e.message}');
     } catch (e) {
-      throw Exception('알 수 없는 오류: $e');
+      throw Exception('error: $e');
     }
   }
 }

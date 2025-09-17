@@ -15,7 +15,7 @@ class LoadingWidget extends StatelessWidget {
           ),
           SizedBox(height: 16),
           Text(
-            '날씨 정보를 불러오는 중...',
+            '天気情報収集中...',
             style: TextStyle(
               color: Colors.white,
               fontSize: 16,
